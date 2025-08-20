@@ -140,6 +140,7 @@ const HomePage = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data.output_image_url) {
+          console.log("Processing Successful");
           toast({
             title: "Processing Successful",
             description: "The image has been processed.",
