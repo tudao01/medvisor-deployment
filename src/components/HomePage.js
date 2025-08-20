@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import ChatBot from './ChatBot';
+import spacesAPI from '../utils/api';
 import {
   Box,
   Container,
@@ -117,7 +118,7 @@ const HomePage = () => {
     }
   }, [toast]);
 
-  const handleFileUpload = (selectedFile) => {
+  const handleFileUpload = async (selectedFile) => {
     setFile(selectedFile);
     setDiscImages([]); // Clear old disc images
     setPreview(null); // Clear old preview image
@@ -129,58 +130,85 @@ const HomePage = () => {
     };
     reader.readAsDataURL(selectedFile);
   
-    // Upload file to backend
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    fetch('https://medvisor-backend-production.up.railway.app/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.output_image_url) {
-          console.log("Processing Successful");
-          toast({
-            title: "Processing Successful",
-            description: "The image has been processed.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-          });
-  
-          const RAILWAY_URL = 'https://medvisor-backend-production.up.railway.app';
-
-          setPreview(`${RAILWAY_URL}${data.output_image_url}`);
-          setDiscImages(
-            data.disc_images.map((disc) => ({
-              url: `${RAILWAY_URL}${disc.url}`,
-              message: disc.message,
-            }))
-          );
-        } else {
-          toast({
-            title: "Processing Failed",
-            description: "The server could not process the image.",
-            status: "error",
-            duration: 3000,
-            isClosable: true,
-          });
-        }
-      })
-      .catch((error) => {
-        console.error("Error uploading image:", error);
+    try {
+      // Process image using Hugging Face Spaces backend
+      const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
+      
+      if (result && result.data && result.data.length >= 2) {
+        console.log("Processing Successful");
         toast({
-          title: "Upload Failed",
-          description: "There was an error uploading the image.",
+          title: "Processing Successful",
+          description: "The image has been processed and discs detected.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Extract processed image and analysis results
+        const processedImage = result.data[0]; // First element is the processed image
+        const analysisResults = result.data[1]; // Second element is the analysis text
+        
+        // Set the processed image
+        if (processedImage && processedImage.image) {
+          setPreview(processedImage.image);
+        }
+        
+        // Parse the analysis results to extract disc information
+        if (analysisResults && typeof analysisResults === 'string') {
+          // Parse the analysis text to extract disc results
+          const discResults = parseAnalysisResults(analysisResults);
+          setDiscImages(discResults);
+        }
+      } else {
+        toast({
+          title: "Processing Failed",
+          description: "The server could not process the image properly.",
           status: "error",
           duration: 3000,
           isClosable: true,
         });
-      })
-      .finally(() => {
-        setLoading(false); // Stop loading animation
+      }
+    } catch (error) {
+      console.error("Error processing image:", error);
+      toast({
+        title: "Processing Failed",
+        description: "There was an error processing the image. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
       });
+    } finally {
+      setLoading(false); // Stop loading animation
+    }
+  };
+
+  // Helper function to parse analysis results
+  const parseAnalysisResults = (analysisText) => {
+    const discResults = [];
+    const lines = analysisText.split('\n');
+    let currentDisc = null;
+    
+    for (const line of lines) {
+      if (line.startsWith('Disc ')) {
+        if (currentDisc) {
+          discResults.push(currentDisc);
+        }
+        currentDisc = {
+          url: '', // We don't have individual disc images from HF Spaces
+          message: line + '\n',
+          discNumber: line.match(/Disc (\d+):/)?.[1] || 'Unknown'
+        };
+      } else if (currentDisc && line.trim()) {
+        currentDisc.message += line + '\n';
+      }
+    }
+    
+    // Add the last disc
+    if (currentDisc) {
+      discResults.push(currentDisc);
+    }
+    
+    return discResults;
   };
   
 
@@ -499,37 +527,27 @@ const HomePage = () => {
                         {discImages.length > 0 && (
                           <Box mt={8}>
                             <Heading size="md" color="#1a365d" textAlign="center" mb={4}>
-                              Extracted Disc Images
+                              Disc Analysis Results
                             </Heading>
-                            <Grid templateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap={4}>
+                            <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={4}>
                             {discImages.map((disc, index) => (
                               <Flex
                                 key={index}
                                 direction="column"
-                                align="center"
-                                justify="center"
-                                textAlign="center"
-                                p={4}
+                                align="flex-start"
+                                justify="flex-start"
+                                textAlign="left"
+                                p={6}
                                 borderRadius="md"
                                 boxShadow="lg"
                                 bg="white"
+                                minH="200px"
                               >
-                                <Image
-                                  src={disc.url}
-                                  alt={`Disc Image ${index + 1}`}
-                                  maxH="150px"
-                                  objectFit="contain"
-                                  borderRadius="lg"
-                                  boxShadow="lg"
-                                  mb={4} // Add space between the image and text
-                                />
-                                <Text color="gray.500" fontSize="sm" textAlign="center">
-                                  {disc.message.split('\n').map((line, i) => (
-                                    <span key={i}>
-                                      {line}
-                                      <br />
-                                    </span>
-                                  ))}
+                                <Heading size="sm" color="#1a365d" mb={3}>
+                                  {disc.discNumber ? `Disc ${disc.discNumber}` : `Disc ${index + 1}`}
+                                </Heading>
+                                <Text color="gray.700" fontSize="sm" whiteSpace="pre-line">
+                                  {disc.message}
                                 </Text>
                               </Flex>
                             ))}

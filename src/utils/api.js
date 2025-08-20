@@ -1,9 +1,8 @@
 // API utilities for communicating with Hugging Face Spaces backend
-
-const SPACES_BASE_URL = process.env.REACT_APP_SPACES_URL || 'https://your-username-medvisor-ai.hf.space';
+import config from '../../config.js';
 
 class SpacesAPI {
-  constructor(baseURL = SPACES_BASE_URL) {
+  constructor(baseURL = config.SPACES_BASE_URL) {
     this.baseURL = baseURL;
   }
 
@@ -45,15 +44,15 @@ class SpacesAPI {
     }
   }
 
-  // Chat with the bot
-  async chat(message) {
+  // Process image using the specific process_image function
+  async processImageWithDiscDetection(imageFile) {
     try {
-      const response = await fetch(`${this.baseURL}/chat`, {
+      const formData = new FormData();
+      formData.append('data', imageFile);
+      
+      const response = await fetch(`${this.baseURL}/run/process_image`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -63,7 +62,32 @@ class SpacesAPI {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Chat failed:', error);
+      console.error('Image processing with disc detection failed:', error);
+      throw error;
+    }
+  }
+
+  // Chat with the bot using the chat_with_bot function
+  async chatWithBot(message, history = []) {
+    try {
+      const response = await fetch(`${this.baseURL}/run/chat_with_bot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: [message, history]
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Chat with bot failed:', error);
       throw error;
     }
   }

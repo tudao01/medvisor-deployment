@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import spacesAPI from '../utils/api';
 import {
   Box,
   IconButton,
@@ -25,30 +26,23 @@ const ChatBot = () => {
       setInputMessage('');
   
       try {
-        // Send POST request to the Flask backend
-        const response = await fetch(`https://medvisor-backend-production.up.railway.app/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ message: inputMessage }),
-        });
+        // Use Hugging Face Spaces backend for chat
+        const result = await spacesAPI.chatWithBot(inputMessage, messages.map(m => [m.text, m.sender === 'bot' ? m.text : '']));
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch response from server.');
+        if (result && result.data && result.data.length > 0) {
+          const botResponse = result.data[0];
+          setMessages((prev) => [
+            ...prev,
+            { text: botResponse, sender: 'bot' },
+          ]);
+        } else {
+          throw new Error('Invalid response format from server.');
         }
-  
-        const data = await response.json();
-        
-        setMessages((prev) => [
-          ...prev,
-          { text: data.response, sender: 'bot' },
-        ]);
       } catch (error) {
         console.error('Error fetching chatbot response:', error);
         setMessages((prev) => [
           ...prev,
-          { text: 'Error: Unable to fetch response from the server.', sender: 'bot' },
+          { text: 'Error: Unable to fetch response from the server. Please try again.', sender: 'bot' },
         ]);
       }
     }

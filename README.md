@@ -1,56 +1,213 @@
-# AIM MedVisor: Simplifying MRI Analysis with AI
+# MedVisor AI - Frontend Integration
 
-## Project Overview
+This is the React frontend for MedVisor AI, integrated with the Hugging Face Spaces backend for medical image analysis and AI chat functionality.
 
-AIM MedVisor is an AI-powered medical tool designed to streamline the diagnosis of spinal abnormalities through advanced MRI analysis. By leveraging dual-model AI systems, MedVisor reduces the barriers to diagnosis, making spinal health assessments more efficient and accessible.
+## 🏥 Features
 
-## Problem Statement
+- **Medical Image Analysis**: Upload and analyze spine images using UNet segmentation
+- **Disc Detection**: Automatic detection and analysis of individual spinal discs
+- **AI Chat Assistant**: Interactive chatbot for medical queries
+- **Modern UI**: Built with React and Chakra UI for a professional medical interface
 
-The path from identifying symptoms like "my back hurts" to diagnosing conditions such as intervertebral disc degeneration is complex and time-consuming. Current spinal assessment practices, which analyze MRI scans per vertebra, are hindered by manual processes and a steep learning curve.
-
-## Solution
-
-AIM MedVisor introduces a two-model system to address these challenges:
-
-1. **Segmentation Model**: Processes full spine MRI scans to identify individual vertebrae and discs. The segmentation model is trained on a **UNet architecture** and utilizes **OpenCV** for boxing regions of interest.
-2. **Classification Model**: Classifies individual vertebrae to detect and grade disk deviations based on established grading systems like Pfirrmann and Modic. The diagnosis model is powered by a **ResNet50 architecture** for precise and reliable classification.
-
-## Key Features
-
-- **Dual-Model Architecture**: Enhances the accuracy of segmentation and classification tasks.
-- **Tech Stack**:
-  - **Model Development**: TensorFlow, PyTorch, Keras, SimpleITK, OpenCV
-  - **Application**: React (Chakra UI), Python (Flask)
-- **Expandable Scope**: Designed for future capabilities, including symptom progression prediction and user-friendly interfaces for non-professionals.
-
-## How It Works
-
-1. **Input**: Full spine MRI scan.
-2. **Step 1**: Segmentation Model isolates individual vertebrae and discs using a UNet model with OpenCV for region boxing.
-3. **Step 2**: Classification Model grades and diagnoses detected abnormalities using ResNet50.
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- TensorFlow and PyTorch installed
+
+- Node.js (v16 or higher)
+- npm or yarn
 
 ### Installation
-1. Clone the repository:
+
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/YourUsername/AIM-MedVisor.git
-   cd AIM-MedVisor
+   git clone <repository-url>
+   cd medvisor-deployment
    ```
-2. Set up the backend:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install -r requirements.txt
-    python app.py
-    ```
-3. Set up the frontend:
+
+2. **Install dependencies**
    ```bash
    npm install
+   ```
+
+3. **Set environment variables**
+   Create a `.env` file in the root directory:
+   ```env
+   REACT_APP_SPACES_URL=https://tudao01-medvisor-ai.hf.space
+   ```
+
+4. **Start the development server**
+   ```bash
    npm start
    ```
+
+5. **Build for production**
+   ```bash
+   npm run build
+   ```
+
+## 🔧 Backend Integration
+
+### Hugging Face Spaces Backend
+
+The frontend is integrated with the Hugging Face Spaces backend (`medvisor-ai`) which provides:
+
+- **UNet Segmentation**: Spine structure detection and segmentation
+- **Disc Analysis**: Individual disc extraction and pathology analysis
+- **AI Chat**: Medical information chatbot using NLTK
+
+### API Endpoints
+
+The frontend communicates with the backend through these endpoints:
+
+- **Image Processing**: `/run/process_image` - Analyzes medical images
+- **Chat**: `/run/chat_with_bot` - Handles chatbot conversations
+
+### Data Flow
+
+1. **Image Upload**: User selects a medical image
+2. **Backend Processing**: Image is sent to Hugging Face Spaces
+3. **UNet Segmentation**: Spine structures are detected and segmented
+4. **Disc Extraction**: Individual discs are identified and analyzed
+5. **Results Display**: Analysis results are shown in the UI
+
+## 📁 Project Structure
+
+```
+medvisor-deployment/
+├── public/                 # Static assets
+├── src/
+│   ├── components/         # React components
+│   │   ├── HomePage.js    # Main image analysis interface
+│   │   └── ChatBot.js     # AI chat component
+│   ├── utils/
+│   │   └── api.js         # API utilities for HF Spaces
+│   ├── App.js             # Main app component
+│   └── index.js           # Entry point
+├── package.json            # Dependencies and scripts
+└── README.md              # This file
+```
+
+## 🎯 Key Components
+
+### HomePage.js
+- **File Upload Interface**: Drag-and-drop image upload
+- **Image Processing**: Integration with Hugging Face Spaces backend
+- **Results Display**: Shows processed images and disc analysis
+- **Responsive Design**: Mobile-friendly interface
+
+### ChatBot.js
+- **Floating Chat Interface**: Always-accessible chat widget
+- **AI Integration**: Connected to Hugging Face Spaces chatbot
+- **Message History**: Maintains conversation context
+
+### api.js
+- **SpacesAPI Class**: Handles all backend communication
+- **Error Handling**: Robust error handling and user feedback
+- **Data Formatting**: Converts backend responses to frontend format
+
+## 🔌 API Integration Details
+
+### Image Processing
+
+```javascript
+// Process image with disc detection
+const result = await spacesAPI.processImageWithDiscDetection(imageFile);
+
+// Extract results
+const processedImage = result.data[0];        // Processed image
+const analysisResults = result.data[1];       // Analysis text
+```
+
+### Chat Integration
+
+```javascript
+// Send message to chatbot
+const result = await spacesAPI.chatWithBot(message, history);
+
+// Extract response
+const botResponse = result.data[0];
+```
+
+## 🎨 UI/UX Features
+
+- **Professional Medical Design**: Clean, trustworthy interface
+- **Responsive Layout**: Works on all device sizes
+- **Loading States**: Clear feedback during processing
+- **Error Handling**: User-friendly error messages
+- **Success Notifications**: Toast notifications for user feedback
+
+## 🚀 Deployment
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Deploy to Static Hosting
+The built files in the `build/` directory can be deployed to:
+- Netlify
+- Vercel
+- GitHub Pages
+- Any static hosting service
+
+### Environment Configuration
+Ensure the following environment variables are set:
+- `REACT_APP_SPACES_URL`: Hugging Face Spaces backend URL
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **Backend Connection Failed**
+   - Check if Hugging Face Space is running
+   - Verify the `REACT_APP_SPACES_URL` environment variable
+   - Check browser console for CORS errors
+
+2. **Image Processing Errors**
+   - Ensure image format is supported (JPEG, PNG)
+   - Check image size (should be reasonable, not too large)
+   - Verify backend models are loaded
+
+3. **Chat Not Working**
+   - Check if chat endpoint is accessible
+   - Verify message format is correct
+   - Check browser console for API errors
+
+### Debug Mode
+
+Enable debug logging by setting:
+```javascript
+localStorage.setItem('debug', 'true');
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the ISC License.
+
+## 👥 Team
+
+- Love Bhusal
+- Tu Dao
+- Elden Delguia
+- Riley Mckinney
+- Sai Peram
+- Rishil Uppaluru
+
+## 📞 Support
+
+For technical support or questions:
+- Check the Hugging Face Space: https://tudao01-medvisor-ai.hf.space
+- Review the backend repository: `medvisor-ai`
+- Check browser console for error messages
+
+---
+
+**Note**: This tool is for educational and research purposes only. Always consult with healthcare professionals for medical decisions.
