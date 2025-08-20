@@ -25,8 +25,14 @@ const ChatBot = () => {
       setInputMessage('');
   
       try {
-        // Send GET request to the Flask backend
-        const response = await fetch(`http://127.0.0.1:5000/get?msg=${encodeURIComponent(inputMessage)}`);
+        // Send POST request to the Flask backend
+        const response = await fetch(`https://medvisor-backend-production.up.railway.app/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: inputMessage }),
+        });
         
         if (!response.ok) {
           throw new Error('Failed to fetch response from server.');
