@@ -133,7 +133,7 @@ const HomePage = () => {
     const formData = new FormData();
     formData.append('file', selectedFile);
   
-    fetch('http://127.0.0.1:5000/upload', {
+    fetch('https://medvisor-backend-production.up.railway.app/upload', {
       method: 'POST',
       body: formData,
     })
@@ -148,11 +148,12 @@ const HomePage = () => {
             isClosable: true,
           });
   
-          // Set new preview and disc images
-          setPreview(`http://127.0.0.1:5000${data.output_image_url}`);
+          const RAILWAY_URL = 'https://medvisor-backend-production.up.railway.app';
+
+          setPreview(`${RAILWAY_URL}${data.output_image_url}`);
           setDiscImages(
             data.disc_images.map((disc) => ({
-              url: `http://127.0.0.1:5000${disc.url}`,
+              url: `${RAILWAY_URL}${disc.url}`,
               message: disc.message,
             }))
           );
