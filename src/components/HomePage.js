@@ -132,7 +132,7 @@ const HomePage = () => {
     // Upload file to backend
     const formData = new FormData();
     formData.append('file', selectedFile);
-  
+
     fetch('https://medvisor-backend-production.up.railway.app/upload', {
       method: 'POST',
       body: formData,
