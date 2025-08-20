@@ -23,7 +23,7 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import { FiFile, FiX, FiShield, FiCpu, FiActivity } from 'react-icons/fi';
+import { FiFile, FiX, FiShield, FiCpu, FiActivity, FiLinkedin } from 'react-icons/fi';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -263,6 +263,53 @@ const HomePage = () => {
     </Box>
   );
 
+  const TeamMember = ({ name, linkedin }) => (
+    <Box
+      bg="white"
+      p={6}
+      borderRadius="xl"
+      boxShadow="0 4px 6px rgba(0, 0, 0, 0.05)"
+      maxW="sm"
+      transition="all 0.3s ease"
+      _hover={{
+        transform: 'translateY(-5px)',
+        boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+      }}
+      textAlign="center"
+    >
+      {/* Name */}
+      <VStack spacing={3} mb={4}>
+        <Text
+          fontWeight="bold"
+          color="#1a365d"
+          fontSize="xl"
+        >
+          {name}
+        </Text>
+      </VStack>
+
+      {/* Social links */}
+      <HStack spacing={3} justify="center">
+        {linkedin && (
+          <Button
+            as="a"
+            href={linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="sm"
+            colorScheme="blue"
+            variant="ghost"
+            leftIcon={<FiLinkedin />}
+            _hover={{ bg: 'blue.50' }}
+          >
+            LinkedIn
+          </Button>
+        )}
+
+      </HStack>
+    </Box>
+  );
+
   return (
     <Box bg="#1a365d" minH="100vh">
       {/* Hero Section */}
@@ -288,14 +335,14 @@ const HomePage = () => {
                 MedVisor AI
               </Heading>
               <Text
-                color="#5A6F6A"
+                color="#FFFFFF"
                 fontSize="2xl"
                 textAlign="center"
                 maxW="800px"
                 fontWeight="medium"
                 animation={`${fadeIn} 1s ease-out`}
               >
-                Advanced Medical Image Analysis Powered by Artificial Intelligence
+                Medical Image Analysis Powered by Artificial Intelligence
               </Text>
             </VStack>
 
@@ -497,124 +544,67 @@ const HomePage = () => {
         </Container>
       </Box>
 
-      {/* Features Section */}
+      {/* Team Credits Section */}
       <Box bg="white" py={20}>
         <Container maxW="container.xl">
-          <VStack spacing={16}>
+          <VStack spacing={12}>
             <VStack spacing={4}>
-              <Heading color="#1a365d" size="xl">
-                Why Choose MedVisor?
+              <Heading 
+                color="#1a365d" 
+                size="xl" 
+                textAlign="center"
+                position="relative"
+                _after={{
+                  content: '""',
+                  display: 'block',
+                  width: '60px',
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #90CDF4, #1a365d)',
+                  margin: '0 auto',
+                  marginTop: '20px',
+                  borderRadius: 'full',
+                }}
+              >
+                Meet Our Team
               </Heading>
-              <Text color="#5A6F6A" fontSize="lg" textAlign="center" maxW="600px">
-                Advanced technology meets medical expertise for precise diagnosis
-              </Text>
             </VStack>
 
-            <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={8}>
-              <GridItem>
-                <FeatureCard
-                  icon={FiShield}
-                  title="Secure Analysis"
-                  description="Your medical data is protected with enterprise-grade security and encryption"
-                />
-              </GridItem>
-              <GridItem>
-                <FeatureCard
-                  icon={FiCpu}
-                  title="AI-Powered"
-                  description="State-of-the-art artificial intelligence for accurate medical image analysis"
-                />
-              </GridItem>
-              <GridItem>
-                <FeatureCard
-                  icon={FiActivity}
-                  title="Real-time Results"
-                  description="Get instant insights and detailed analysis of your medical images"
-                />
-              </GridItem>
+            {/* Team members grid */}
+            <Grid
+              templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
+              gap={{ base: 8, md: 10 }}
+              px={{ base: 4, md: 0 }}
+            >
+              {/* Add your teammates here - just update the props */}
+              <TeamMember
+                name="Love Bhusal"
+                linkedin="https://www.linkedin.com/in/love-bhusal/"
+              />
+              <TeamMember
+                name="Tu Dao"
+                linkedin="https://www.linkedin.com/in/tudao02/"
+              />
+              <TeamMember
+                name="Elden Delguia"
+                linkedin="https://www.linkedin.com/in/elden-deguia-84a68b325/"
+              />
+              <TeamMember
+                name="Riley Mckinney"
+                linkedin="https://www.linkedin.com/in/riley-mckinney/"
+              />
+              <TeamMember
+                name="Sai Peram"
+                linkedin="https://www.linkedin.com/in/sai-peram/"
+              />
+              <TeamMember
+                name="Rishil Uppaluru"
+                linkedin="https://www.linkedin.com/in/rishiluppaluru/"
+              />
             </Grid>
           </VStack>
         </Container>
       </Box>
-
-      <Box bg="gray.50" py={20}>
-  <Container maxW="container.xl">
-    <VStack spacing={12}>
-      {/* Section heading with decorative element */}
-      <VStack spacing={4}>
-        <Heading 
-          color="#1a365d" 
-          size="xl" 
-          textAlign="center"
-          position="relative"
-          _after={{
-            content: '""',
-            display: 'block',
-            width: '60px',
-            height: '4px',
-            background: 'linear-gradient(90deg, #90CDF4, #1a365d)',
-            margin: '0 auto',
-            marginTop: '20px',
-            borderRadius: 'full',
-          }}
-        >
-          Trusted by Healthcare Professionals
-        </Heading>
-        <Text 
-          color="gray.600" 
-          textAlign="center" 
-          maxW="2xl"
-          fontSize="lg"
-        >
-          See what medical experts are saying about our platform
-        </Text>
-      </VStack>
-
-      {/* Testimonial grid */}
-      <Grid
-        templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
-        gap={{ base: 8, md: 10 }}
-        px={{ base: 4, md: 0 }}
-      >
-        <Testimonial
-          text="As a radiologist, I'm amazed by how this platform has enhanced our diagnostic capabilities. The accuracy and speed are remarkable."
-          author="Dr. Sarah Chen"
-          role="Radiologist"
-        />
-        <Testimonial
-          text="This system has transformed our workflow. We can now provide faster and more accurate diagnoses to our patients."
-          author="Dr. James Wilson"
-          role="Medical Director"
-        />
-        <Testimonial
-          text="The intuitive interface and reliable results make this an essential tool in our daily practice. Highly recommended."
-          author="Dr. Maria Garcia"
-          role="Chief Radiologist"
-        />
-      </Grid>
-    </VStack>
-  </Container>
-</Box>
-
-      {/* Stats Section */}
-      <Box bg="#f8fafc" py={16}>
-        <Container maxW="container.xl">
-          <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={8} textAlign="center">
-            <VStack>
-              <Text color="#1a365d" fontSize="4xl" fontWeight="bold">99.9%</Text>
-              <Text color="#5A6F6A" fontSize="lg">Accuracy Rate</Text>
-            </VStack>
-            <VStack>
-              <Text color="#1a365d" fontSize="4xl" fontWeight="bold">1M+</Text>
-              <Text color="#5A6F6A" fontSize="lg">Images Analyzed</Text>
-            </VStack>
-            <VStack>
-              <Text color="#1a365d" fontSize="4xl" fontWeight="bold">24/7</Text>
-              <Text color="#5A6F6A" fontSize="lg">Support Available</Text>
-            </VStack>
-          </Grid>
-        </Container>
-      </Box>
+      
       <ChatBot />
     </Box>
   );
