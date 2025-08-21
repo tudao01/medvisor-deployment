@@ -119,6 +119,30 @@ const HomePage = () => {
   }, [toast]);
 
   const handleFileUpload = async (selectedFile) => {
+    // Validate file
+    if (!selectedFile || !(selectedFile instanceof File)) {
+      toast({
+        title: "Invalid File",
+        description: "Please select a valid image file.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    // Check file size (max 10MB)
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image smaller than 10MB.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
     setFile(selectedFile);
     setDiscImages([]); // Clear old disc images
     setPreview(null); // Clear old preview image
@@ -131,6 +155,7 @@ const HomePage = () => {
     reader.readAsDataURL(selectedFile);
   
     try {
+      console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size);
       // Process image using Hugging Face Spaces backend
       const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
       

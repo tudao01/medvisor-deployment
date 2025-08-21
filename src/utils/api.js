@@ -47,6 +47,17 @@ class SpacesAPI {
   // Process image using the default Gradio endpoint
   async processImageWithDiscDetection(imageFile) {
     try {
+      // Validate file before sending
+      if (!imageFile || !(imageFile instanceof File)) {
+        throw new Error('Invalid file object');
+      }
+      
+      console.log('File details:', {
+        name: imageFile.name,
+        size: imageFile.size,
+        type: imageFile.type
+      });
+      
       const formData = new FormData();
       formData.append('data', imageFile);
       
@@ -54,6 +65,7 @@ class SpacesAPI {
       const response = await fetch(`${this.baseURL}/run/predict`, {
         method: 'POST',
         body: formData,
+        // Don't set Content-Length header - let the browser handle it
       });
 
       if (!response.ok) {
