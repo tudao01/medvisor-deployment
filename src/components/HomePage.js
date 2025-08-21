@@ -15,16 +15,12 @@ import {
   Icon,
   Center,
   Button,
-  Progress,
-  Badge,
-  Flex,
-  Divider,
-  Grid,
-  GridItem,
   Spinner,
+  Flex,
+  Grid,
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import { FiFile, FiX, FiShield, FiCpu, FiActivity, FiLinkedin } from 'react-icons/fi';
+import { FiFile, FiX, FiActivity, FiLinkedin } from 'react-icons/fi';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -46,249 +42,105 @@ const MedicalUploadIcon = (props) => (
   </Icon>
 );
 
-const FeatureCard = ({ icon, title, description }) => (
-  <Card
-    bg="white"
-    p={6}
-    borderRadius="xl"
-    boxShadow="lg"
-    transition="all 0.3s ease"
-    _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
-    h="full"
-  >
-    <VStack spacing={4} align="flex-start">
-      <Icon as={icon} w={8} h={8} color="#5A6F6A" />
-      <Heading size="md" color="#1a365d">
-        {title}
-      </Heading>
-      <Text color="gray.600">{description}</Text>
-    </VStack>
-  </Card>
-);
-
 const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [discImages, setDiscImages] = useState([]);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const toast = useToast();
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.stopPropagation();
     setIsDragging(true);
   }, []);
 
   const handleDragLeave = useCallback((e) => {
     e.preventDefault();
-    e.stopPropagation();
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
-      handleFileUpload(droppedFile);
-    } else {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload an image file",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  }, [toast]);
-
-  const simulateUploadProgress = () => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => setUploadProgress(0), 1000);
-      }
-    }, 100);
-  };
-
-  const handleFileUpload = async (selectedFile) => {
-    // Validate file
-    if (!selectedFile || !(selectedFile instanceof File)) {
-      toast({
-        title: "Invalid File",
-        description: "Please select a valid image file.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-    
-    // Additional file validation
-    if (selectedFile.size === 0) {
-      toast({
-        title: "Empty File",
-        description: "The selected file is empty. Please choose a different file.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-    
-    // Check file size (max 10MB)
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please select an image smaller than 10MB.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-    
-    // Validate file type
-    if (!selectedFile.type.startsWith('image/')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select an image file (JPEG, PNG, etc.).",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-    
-    setFile(selectedFile);
-    setDiscImages([]); // Clear old disc images
-    setPreview(null); // Clear old preview image
-    setLoading(true); // Start loading animation
-  
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result); // Set temporary preview
-    };
-    reader.readAsDataURL(selectedFile);
-  
-    try {
-      console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size);
-      
-      // Process image using Hugging Face Spaces backend
-      const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
-      
-      console.log('Full API Response:', result);
-      
-      if (result && result.data && result.data.length >= 2) {
-        console.log("Processing Successful");
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile && droppedFile.type.startsWith('image/')) {
+        handleFileUpload(droppedFile);
+      } else {
         toast({
-          title: "Processing Successful",
-          description: "The image has been processed and discs detected.",
-          status: "success",
+          title: 'Invalid file type',
+          description: 'Please upload an image file',
+          status: 'error',
           duration: 3000,
           isClosable: true,
         });
+      }
+    },
+    [toast]
+  );
 
-        // Extract processed image and analysis results
-        const processedImageData = result.data[0]; // First element is the processed image
-        const analysisResultsJSON = result.data[1]; // Second element is the JSON string
-        
-        console.log('Processed Image Data:', processedImageData);
-        console.log('Analysis Results JSON:', analysisResultsJSON);
-        
-        // Handle the processed image with bounding boxes
+  const handleFileUpload = async (selectedFile) => {
+    if (!selectedFile || !(selectedFile instanceof File)) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select a valid image file.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setFile(selectedFile);
+    setDiscImages([]);
+    setPreview(null);
+    setLoading(true);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result);
+    };
+    reader.readAsDataURL(selectedFile);
+
+    try {
+      const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
+      if (result && result.data && result.data.length >= 2) {
+        const processedImageData = result.data[0];
+        const analysisResultsJSON = result.data[1];
+
         let processedImageSrc = null;
-        
         if (typeof processedImageData === 'string') {
-          // If it's already a base64 string or URL
           processedImageSrc = processedImageData;
-        } else if (processedImageData && processedImageData.image) {
-          // If it's wrapped in an object
+        } else if (processedImageData?.image) {
           processedImageSrc = processedImageData.image;
-        } else if (processedImageData && processedImageData.url) {
-          // If it's a URL object
+        } else if (processedImageData?.url) {
           processedImageSrc = processedImageData.url;
-        } else if (processedImageData && typeof processedImageData === 'object') {
-          // Try to find any property that looks like an image
-          const imageKeys = ['image', 'url', 'src', 'data'];
-          for (const key of imageKeys) {
-            if (processedImageData[key]) {
-              processedImageSrc = processedImageData[key];
-              break;
-            }
-          }
         }
-        
-        // If we still don't have a processed image source, log the structure
-        if (!processedImageSrc) {
-          console.warn('Could not find processed image in response. Structure:', processedImageData);
-          console.log('Type of processedImageData:', typeof processedImageData);
-          console.log('Keys in processedImageData:', Object.keys(processedImageData || {}));
-          
-          // Fallback: use the original preview if no processed image found
-        } else {
-          // Set the processed image with bounding boxes as the preview
-          console.log('Setting processed image as preview:', processedImageSrc);
-          setPreview(processedImageSrc);
-        }
-        
-        // Parse the JSON analysis results
+        if (processedImageSrc) setPreview(processedImageSrc);
+
         if (analysisResultsJSON && typeof analysisResultsJSON === 'string') {
           try {
             const parsedResults = JSON.parse(analysisResultsJSON);
-            console.log('Parsed Results:', parsedResults);
-            
             if (Array.isArray(parsedResults)) {
               setDiscImages(parsedResults);
-            } else {
-              console.error('Expected array but got:', typeof parsedResults);
-              toast({
-                title: "Data Format Error",
-                description: "Unexpected data format received from server.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-              });
             }
-          } catch (parseError) {
-            console.error('Error parsing JSON results:', parseError);
-            toast({
-              title: "Data Parse Error",
-              description: "Could not parse analysis results from server.",
-              status: "error",
-              duration: 3000,
-              isClosable: true,
-            });
+          } catch (err) {
+            console.error('Parse error:', err);
           }
         }
-      } else {
-        console.log('Unexpected response format:', result);
-        toast({
-          title: "Processing Failed",
-          description: "The server could not process the image properly.",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
       }
     } catch (error) {
-      console.error("Error processing image:", error);
+      console.error('Error processing image:', error);
       toast({
-        title: "Processing Failed",
-        description: "There was an error processing the image. Please try again.",
-        status: "error",
+        title: 'Processing Failed',
+        description: 'There was an error processing the image.',
+        status: 'error',
         duration: 3000,
         isClosable: true,
       });
     } finally {
-      setLoading(false); // Stop loading animation
+      setLoading(false);
     }
   };
 
@@ -301,112 +153,27 @@ const HomePage = () => {
   const removeFile = () => {
     setFile(null);
     setPreview(null);
-    setUploadProgress(0);
     setDiscImages([]);
   };
 
   const formatPredictionValue = (value, isInteger = false) => {
-    if (isInteger) {
-      return Math.round(value);
-    }
+    if (isInteger) return Math.round(value);
     return typeof value === 'number' ? value.toFixed(3) : value;
   };
-
-  const Testimonial = ({ text, author, role }) => (
-    <Box
-      bg="white"
-      p={8}
-      borderRadius="xl"
-      boxShadow="0 4px 6px rgba(0, 0, 0, 0.05)"
-      maxW="sm"
-      position="relative"
-      transition="all 0.3s ease"
-      _hover={{
-        transform: 'translateY(-8px)',
-        boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
-      }}
-    >
-      {/* Decorative quote mark */}
-      <Box
-        position="absolute"
-        top={4}
-        left={4}
-        fontSize="6xl"
-        color="#90CDF4"
-        opacity={0.3}
-        lineHeight="1"
-        fontFamily="Georgia, serif"
-      >
-        "
-      </Box>
-  
-      {/* Testimonial text */}
-      <Text
-        mt={8}
-        mb={6}
-        fontSize="md"
-        lineHeight="1.7"
-        color="gray.700"
-        fontStyle="italic"
-        position="relative"
-        zIndex="1"
-      >
-        {text}
-      </Text>
-  
-      {/* Divider */}
-      <Box
-        w="40px"
-        h="2px"
-        bg="blue.100"
-        mb={4}
-      />
-  
-      {/* Author info */}
-      <VStack align="flex-start" spacing={1}>
-        <Text
-          fontWeight="bold"
-          color="#1a365d"
-          fontSize="md"
-        >
-          {author}
-        </Text>
-        <Text
-          color="gray.500"
-          fontSize="sm"
-        >
-          {role}
-        </Text>
-      </VStack>
-    </Box>
-  );
 
   const TeamMember = ({ name, linkedin }) => (
     <Box
       bg="white"
       p={6}
       borderRadius="xl"
-      boxShadow="0 4px 6px rgba(0, 0, 0, 0.05)"
-      maxW="sm"
-      transition="all 0.3s ease"
-      _hover={{
-        transform: 'translateY(-5px)',
-        boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
-      }}
+      boxShadow="sm"
       textAlign="center"
     >
-      {/* Name */}
       <VStack spacing={3} mb={4}>
-        <Text
-          fontWeight="bold"
-          color="#1a365d"
-          fontSize="xl"
-        >
+        <Text fontWeight="bold" color="#1a365d" fontSize="xl">
           {name}
         </Text>
       </VStack>
-
-      {/* Social links */}
       <HStack spacing={3} justify="center">
         {linkedin && (
           <Button
@@ -418,7 +185,6 @@ const HomePage = () => {
             colorScheme="blue"
             variant="ghost"
             leftIcon={<FiLinkedin />}
-            _hover={{ bg: 'blue.50' }}
           >
             LinkedIn
           </Button>
@@ -430,51 +196,18 @@ const HomePage = () => {
   return (
     <Box bg="#1a365d" minH="100vh">
       {/* Hero Section */}
-      <Box 
-        w="full" 
-        position="relative" 
-        overflow="hidden"
-        pb={20}
-        pt={10}
-        animation={`${fadeIn} 0.5s ease-out`}
-      >
+      <Box w="full" pb={20} pt={10} animation={`${fadeIn} 0.5s ease-out`}>
         <Container maxW="container.xl">
           <VStack spacing={8} align="center">
-            <VStack spacing={4}>
-              <Heading
-                size="2xl"
-                color="white"
-                textAlign="center"
-                fontWeight="bold"
-                animation={`${fadeIn} 0.8s ease-out`}
-                _hover={{ transform: 'scale(1.02)', transition: 'transform 0.3s' }}
-              >
-                MedVisor AI
-              </Heading>
-              <Text
-                color="#FFFFFF"
-                fontSize="2xl"
-                textAlign="center"
-                maxW="800px"
-                fontWeight="medium"
-                animation={`${fadeIn} 1s ease-out`}
-              >
-                Medical Image Analysis Powered by Artificial Intelligence
-              </Text>
-            </VStack>
+            <Heading size="2xl" color="white" textAlign="center">
+              MedVisor AI
+            </Heading>
+            <Text color="white" fontSize="2xl" textAlign="center" maxW="800px">
+              Medical Image Analysis Powered by Artificial Intelligence
+            </Text>
 
             {/* Upload Card */}
-            <Card
-              bg="white"
-              w="full"
-              maxW="800px"
-              borderRadius="2xl"
-              boxShadow="2xl"
-              overflow="hidden"
-              animation={`${fadeIn} 1.2s ease-out`}
-              transition="all 0.3s ease"
-              _hover={{ transform: 'translateY(-2px)' }}
-            >
+            <Card bg="white" w="full" maxW="800px" borderRadius="2xl" boxShadow="2xl">
               <CardBody p={8}>
                 <VStack spacing={6}>
                   {!file ? (
@@ -482,59 +215,28 @@ const HomePage = () => {
                       w="100%"
                       h="300px"
                       border="3px dashed"
-                      borderColor={isDragging ? "#5A6F6A" : "gray.200"}
+                      borderColor={isDragging ? '#5A6F6A' : 'gray.200'}
                       borderRadius="xl"
-                      transition="all 0.3s ease"
-                      bg={isDragging ? "#f0f4f4" : "white"}
+                      bg={isDragging ? '#f0f4f4' : 'white'}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      _hover={{ 
-                        borderColor: "#5A6F6A", 
-                        bg: "#f0f4f4",
-                        transform: 'scale(1.01)'
-                      }}
                     >
                       <Center h="100%" flexDirection="column" p={4}>
-                        <Icon 
-                          as={MedicalUploadIcon} 
-                          w={20} 
-                          h={20} 
+                        <Icon
+                          as={MedicalUploadIcon}
+                          w={20}
+                          h={20}
                           color="#5A6F6A"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                          fill="none"
                           mb={6}
                           animation={`${pulse} 2s infinite`}
                         />
                         <VStack spacing={4}>
-                          <Text 
-                            fontSize="2xl" 
-                            fontWeight="medium" 
-                            color="#1a365d"
-                          >
+                          <Text fontSize="2xl" fontWeight="medium" color="#1a365d">
                             Upload Your Medical Image
                           </Text>
-                          <Text color="gray.500" fontSize="lg">
-                            Drag and drop here or
-                          </Text>
-                          <Button
-                            as="label"
-                            htmlFor="file-upload"
-                            bg="#1a365d"
-                            color="white"
-                            size="lg"
-                            px={8}
-                            height="56px"
-                            fontSize="lg"
-                            cursor="pointer"
-                            transition="all 0.3s ease"
-                            _hover={{ 
-                              bg: "#2a4365",
-                              transform: 'translateY(-2px)',
-                              boxShadow: 'lg'
-                            }}
-                          >
+                          <Text color="gray.500">Drag and drop here or</Text>
+                          <Button as="label" htmlFor="file-upload" bg="#1a365d" color="white">
                             Select File
                             <input
                               id="file-upload"
@@ -544,248 +246,128 @@ const HomePage = () => {
                               style={{ display: 'none' }}
                             />
                           </Button>
-                          <Text 
-                            fontSize="sm" 
-                            color="gray.500" 
-                            textAlign="center"
-                          >
-                            Supported formats: JPEG, PNG, DICOM
-                          </Text>
                         </VStack>
                       </Center>
                     </Box>
                   ) : (
                     <Box w="100%">
-                      <VStack spacing={4} align="stretch">
-                        <HStack justify="space-between" align="center">
+                      <VStack spacing={4}>
+                        <HStack justify="space-between" w="full">
                           <HStack spacing={4}>
-                            <Icon as={FiFile} w={6} h={6} color="#5A6F6A" />
-                            <Text color="#1a365d" fontWeight="medium">
-                              {file.name}
-                            </Text>
+                            <Icon as={FiFile} />
+                            <Text>{file.name}</Text>
                           </HStack>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={removeFile}
-                            colorScheme="red"
-                          >
+                          <Button size="sm" variant="ghost" onClick={removeFile} colorScheme="red">
                             <Icon as={FiX} />
                           </Button>
                         </HStack>
-                        
+
                         <Center>
                           {loading ? (
-                            <Flex
-                              direction="column"
-                              align="center"
-                              justify="center"
-                              height="300px"
-                            >
-                              <Spinner
-                                thickness="4px"
-                                speed="0.65s"
-                                emptyColor="gray.200"
-                                color="blue.500"
-                                size="xl"
-                              />
-                              <Text mt={4} color="gray.500" fontSize="md">
-                                Processing your image...
-                              </Text>
+                            <Flex direction="column" align="center" h="300px">
+                              <Spinner size="xl" color="blue.500" />
+                              <Text mt={4}>Processing your image...</Text>
                             </Flex>
                           ) : (
                             preview && (
-                              <Box mt={8}>
-                                <Heading size="md" color="#1a365d" textAlign="center" mb={4}>
-                                  Processed Image with Detected Discs
+                              <Box mt={6} textAlign="center">
+                                <Heading size="md" color="#1a365d" mb={4}>
+                                  Processed Image
                                 </Heading>
                                 <Image
                                   src={preview}
                                   alt="Processed Output"
                                   maxH="400px"
-                                  objectFit="contain"
+                                  mx="auto"
                                   borderRadius="lg"
-                                  boxShadow="lg"
                                 />
                               </Box>
                             )
                           )}
                         </Center>
 
-                        {/* Updated Playing Card Style Results */}
+                        {/* Simplified Results */}
                         {discImages.length > 0 && (
-                          <Box mt={8}>
+                          <Box mt={8} w="full">
                             <Heading size="md" color="#1a365d" textAlign="center" mb={6}>
-                              Individual Disc Analysis Results ({discImages.length} discs detected)
+                              Analysis Results ({discImages.length} discs)
                             </Heading>
-                            
-                            {/* Playing card style grid - centered and responsive */}
-                            <Flex justify="center" w="full">
-                              <Box maxW="1200px" w="full">
-                                <Grid 
-                                  templateColumns={{
-                                    base: "1fr",                    // 1 card per row on mobile
-                                    sm: "repeat(2, 1fr)",          // 2 cards per row on small screens
-                                    md: "repeat(3, 1fr)",          // 3 cards per row on medium screens
-                                    lg: "repeat(4, 1fr)",          // 4 cards per row on large screens
-                                    xl: "repeat(5, 1fr)"           // 5 cards per row on extra large screens
-                                  }}
-                                  gap={6}
-                                  justifyItems="center"
-                                  px={4}
+
+                            <Flex wrap="wrap" justify="center" gap={6}>
+                              {discImages.map((disc, index) => (
+                                <Card
+                                  key={index}
+                                  w="260px"
+                                  borderRadius="lg"
+                                  border="1px solid"
+                                  borderColor="gray.200"
+                                  boxShadow="md"
+                                  bg="white"
+                                  textAlign="center"
                                 >
-                                  {discImages.map((disc, index) => (
-                                    <Card
-                                      key={index}
-                                      w="240px"                    // Fixed width for playing card feel
-                                      h="400px"                    // Fixed height for consistent card size
-                                      borderRadius="xl"
-                                      boxShadow="0 8px 25px rgba(0, 0, 0, 0.15)"
-                                      bg="white"
-                                      border="1px solid"
-                                      borderColor="gray.100"
-                                      transition="all 0.3s ease"
-                                      _hover={{ 
-                                        transform: 'translateY(-8px) scale(1.02)', 
-                                        boxShadow: '0 15px 35px rgba(0, 0, 0, 0.2)',
-                                        borderColor: "#5A6F6A"
-                                      }}
-                                      cursor="pointer"
-                                      overflow="hidden"
-                                    >
-                                      <CardBody p={0} display="flex" flexDirection="column" h="full">
-                                        {/* Card Header */}
-                                        <Box
-                                          bg="linear-gradient(135deg, #1a365d, #2a4365)"
-                                          color="white"
-                                          py={3}
-                                          px={4}
-                                          textAlign="center"
-                                        >
-                                          <Heading size="md" fontWeight="bold">
-                                            Disc {disc.disc_number}
-                                          </Heading>
-                                        </Box>
-                                        
-                                        {/* Disc Image Section */}
-                                        <Box flex="0 0 140px" p={4} bg="gray.50">
-                                          {disc.disc_image ? (
-                                            <Center h="full">
-                                              <Image
-                                                src={disc.disc_image}
-                                                alt={`Disc ${disc.disc_number}`}
-                                                maxH="120px"
-                                                maxW="full"
-                                                objectFit="contain"
-                                                borderRadius="lg"
-                                                border="2px solid"
-                                                borderColor="white"
-                                                boxShadow="md"
-                                              />
-                                            </Center>
-                                          ) : (
-                                            <Center h="full">
-                                              <Icon as={FiActivity} w={12} h={12} color="gray.400" />
-                                            </Center>
-                                          )}
-                                        </Box>
-                                        
-                                        {/* Predictions Section */}
-                                        <VStack flex="1" p={4} spacing={3} justify="flex-start" align="stretch">
-                                          {/* Primary Classifications */}
-                                          <VStack spacing={2}>
-                                            <HStack justify="space-between" w="full">
-                                              <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                                                Pfirrman Grade
-                                              </Text>
-                                              <Badge 
-                                                colorScheme="blue" 
-                                                fontSize="sm" 
-                                                px={2} 
-                                                py={1} 
-                                                borderRadius="md"
-                                                fontWeight="bold"
-                                              >
-                                                {formatPredictionValue(disc.predictions?.pfirrman_grade, true) || 'N/A'}
-                                              </Badge>
-                                            </HStack>
-                                            
-                                            <HStack justify="space-between" w="full">
-                                              <Text fontSize="sm" fontWeight="bold" color="purple.600">
-                                                Modic Changes
-                                              </Text>
-                                              <Badge 
-                                                colorScheme="purple" 
-                                                fontSize="sm" 
-                                                px={2} 
-                                                py={1} 
-                                                borderRadius="md"
-                                                fontWeight="bold"
-                                              >
-                                                {formatPredictionValue(disc.predictions?.modic, true) || 'N/A'}
-                                              </Badge>
-                                            </HStack>
-                                          </VStack>
-                                          
-                                          <Divider />
-                                          
-                                          {/* Pathology Scores */}
-                                          <VStack spacing={1} align="stretch">
-                                            <Text fontSize="xs" fontWeight="bold" color="gray.600" textAlign="center" mb={2}>
-                                              PATHOLOGY SCORES
-                                            </Text>
-                                            
-                                            {[
-                                              { label: "Herniation", value: disc.predictions?.disc_herniation, color: "red" },
-                                              { label: "Narrowing", value: disc.predictions?.disc_narrowing, color: "orange" },
-                                              { label: "Bulging", value: disc.predictions?.disc_bulging, color: "yellow" },
-                                              { label: "Spondylolisthesis", value: disc.predictions?.spondylilisthesis, color: "green" }
-                                            ].map((item, idx) => (
-                                              <HStack key={idx} justify="space-between" fontSize="xs">
-                                                <Text color="gray.700" fontWeight="medium" noOfLines={1}>
-                                                  {item.label}:
-                                                </Text>
-                                                <Box
-                                                  bg={`${item.color}.100`}
-                                                  color={`${item.color}.700`}
-                                                  px={2}
-                                                  py={1}
-                                                  borderRadius="md"
-                                                  fontSize="xs"
-                                                  fontWeight="bold"
-                                                  minW="45px"
-                                                  textAlign="center"
-                                                >
-                                                  {formatPredictionValue(item.value) || 'N/A'}
-                                                </Box>
-                                              </HStack>
-                                            ))}
-                                            
-                                            {/* Endplate scores in smaller text */}
-                                            <VStack spacing={1} mt={2} pt={2} borderTop="1px solid" borderColor="gray.100">
-                                              <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                                                ENDPLATE SCORES
-                                              </Text>
-                                              <HStack justify="space-between" w="full" fontSize="xs">
-                                                <Text color="gray.600">Upper:</Text>
-                                                <Text fontWeight="bold" color="gray.700">
-                                                  {formatPredictionValue(disc.predictions?.up_endplate) || 'N/A'}
-                                                </Text>
-                                              </HStack>
-                                              <HStack justify="space-between" w="full" fontSize="xs">
-                                                <Text color="gray.600">Lower:</Text>
-                                                <Text fontWeight="bold" color="gray.700">
-                                                  {formatPredictionValue(disc.predictions?.low_endplate) || 'N/A'}
-                                                </Text>
-                                              </HStack>
-                                            </VStack>
-                                          </VStack>
-                                        </VStack>
-                                      </CardBody>
-                                    </Card>
-                                  ))}
-                                </Grid>
-                              </Box>
+                                  <CardBody>
+                                    <Heading size="sm" color="#1a365d" mb={3}>
+                                      Disc {disc.disc_number}
+                                    </Heading>
+                                    {disc.disc_image ? (
+                                      <Image
+                                        src={disc.disc_image}
+                                        alt={`Disc ${disc.disc_number}`}
+                                        maxH="140px"
+                                        mx="auto"
+                                        mb={4}
+                                        objectFit="contain"
+                                        borderRadius="md"
+                                      />
+                                    ) : (
+                                      <Center h="140px" mb={4}>
+                                        <Icon as={FiActivity} w={10} h={10} color="gray.400" />
+                                      </Center>
+                                    )}
+                                    <VStack spacing={2}>
+                                      <Text fontSize="sm">
+                                        <b>Pfirrman:</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.pfirrman_grade, true) ||
+                                          'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Modic:</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.modic, true) || 'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Herniation:</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.disc_herniation) ||
+                                          'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Narrowing:</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.disc_narrowing) ||
+                                          'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Bulging:</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.disc_bulging) ||
+                                          'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Spondylolisthesis:</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.spondylilisthesis) ||
+                                          'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Endplate (Upper):</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.up_endplate) ||
+                                          'N/A'}
+                                      </Text>
+                                      <Text fontSize="sm">
+                                        <b>Endplate (Lower):</b>{' '}
+                                        {formatPredictionValue(disc.predictions?.low_endplate) ||
+                                          'N/A'}
+                                      </Text>
+                                    </VStack>
+                                  </CardBody>
+                                </Card>
+                              ))}
                             </Flex>
                           </Box>
                         )}
@@ -803,53 +385,26 @@ const HomePage = () => {
       <Box bg="white" py={20}>
         <Container maxW="container.xl">
           <VStack spacing={12}>
-            <VStack spacing={4}>
-              <Heading 
-                color="#1a365d" 
-                size="xl" 
-                textAlign="center"
-                position="relative"
-                _after={{
-                  content: '""',
-                  display: 'block',
-                  width: '60px',
-                  height: '4px',
-                  background: 'linear-gradient(90deg, #90CDF4, #1a365d)',
-                  margin: '0 auto',
-                  marginTop: '20px',
-                  borderRadius: 'full',
-                }}
-              >
-                Meet Our Team
-              </Heading>
-            </VStack>
-
-            {/* Team members grid */}
-            <Grid
-              templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
-              gap={{ base: 8, md: 10 }}
-              px={{ base: 4, md: 0 }}
-            >
-              <TeamMember
-                name="Love Bhusal"
-                linkedin="https://www.linkedin.com/in/love-bhusal/"
-              />
-              <TeamMember
-                name="Tu Dao"
-                linkedin="https://www.linkedin.com/in/tudao02/"
-              />
+            <Heading color="#1a365d" size="xl" textAlign="center">
+              Meet Our Team
+            </Heading>
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={8}>
+              <TeamMember 
+                name="Love Bhusal" 
+                linkedin="https://www.linkedin.com/in/love-bhusal/" />
+              <TeamMember 
+                name="Tu Dao" 
+                linkedin="https://www.linkedin.com/in/tudao02/" />
               <TeamMember
                 name="Elden Delguia"
                 linkedin="https://www.linkedin.com/in/elden-deguia-84a68b325/"
               />
-              <TeamMember
-                name="Riley Mckinney"
-                linkedin="https://www.linkedin.com/in/riley-mckinney/"
-              />
-              <TeamMember
-                name="Sai Peram"
-                linkedin="https://www.linkedin.com/in/sai-peram/"
-              />
+              <TeamMember 
+                name="Riley Mckinney" 
+                linkedin="https://www.linkedin.com/in/riley-mckinney/" />
+              <TeamMember 
+                name="Sai Peram" 
+                linkedin="https://www.linkedin.com/in/sai-peram/" />
               <TeamMember
                 name="Rishil Uppaluru"
                 linkedin="https://www.linkedin.com/in/rishiluppaluru/"
@@ -858,7 +413,7 @@ const HomePage = () => {
           </VStack>
         </Container>
       </Box>
-      
+
       <ChatBot />
     </Box>
   );
