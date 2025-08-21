@@ -185,7 +185,7 @@ const HomePage = () => {
         
         console.log('Full API Response:', result);
         
-        if (result && result.data && result.data.length >= 3) {
+        if (result && result.data && result.data.length >= 2) {
           console.log("Processing Successful");
           toast({
             title: "Processing Successful",
@@ -195,31 +195,21 @@ const HomePage = () => {
             isClosable: true,
           });
 
-          // Extract processed image, analysis results, and disc images
+          // Extract processed image and analysis results
           const processedImage = result.data[0]; // First element is the processed image
           const analysisResults = result.data[1]; // Second element is the analysis text
-          const discImagesData = result.data[2]; // Third element is the disc images
           
           console.log('Processed Image:', processedImage);
           console.log('Analysis Results:', analysisResults);
-          console.log('Disc Images Data:', discImagesData);
           
           // Set the processed image
           if (processedImage && processedImage.image) {
             setPreview(processedImage.image);
           }
           
-          // Handle disc images and analysis results
-          if (discImagesData && Array.isArray(discImagesData)) {
-            // Use the disc images directly from the API response
-            const discResults = discImagesData.map((disc, index) => ({
-              url: disc.image, // The actual disc image
-              message: disc.message || `Disc ${index + 1} analysis`,
-              discNumber: index + 1
-            }));
-            setDiscImages(discResults);
-          } else if (analysisResults && typeof analysisResults === 'string') {
-            // Fallback to parsing text if disc images are not available
+          // Parse the analysis results to extract disc information
+          if (analysisResults && typeof analysisResults === 'string') {
+            // Parse the analysis text to extract disc results
             const discResults = parseAnalysisResults(analysisResults);
             setDiscImages(discResults);
           }
