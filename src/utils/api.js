@@ -44,7 +44,7 @@ class SpacesAPI {
     }
   }
 
-  // Process image using the default Gradio endpoint
+  // Process image using the Gradio Blocks interface
   async processImageWithDiscDetection(imageFile) {
     try {
       // Validate file before sending
@@ -68,15 +68,17 @@ class SpacesAPI {
       
       // Try to create a new File object to avoid corruption
       try {
-        const freshFile = new File([imageFile], imageFile.name, { type: imageFile.type });
+        // Read the file as ArrayBuffer to ensure data integrity
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const freshFile = new File([arrayBuffer], imageFile.name, { type: imageFile.type });
         formData.append('data', freshFile);
-        console.log('Fresh file created, size:', freshFile.size);
+        console.log('Fresh file created from ArrayBuffer, size:', freshFile.size);
       } catch (fileError) {
-        console.warn('Could not create fresh file, using original:', fileError);
+        console.warn('Could not create fresh file from ArrayBuffer, using original:', fileError);
         formData.append('data', imageFile);
       }
       
-      // Use the default Gradio endpoint - this will call your process_image function
+      // For Gradio Interface, use the default predict endpoint
       const response = await fetch(`${this.baseURL}/run/predict`, {
         method: 'POST',
         body: formData,
