@@ -1,5 +1,5 @@
 // API utilities for communicating with Hugging Face Spaces backend
-import config from '../../config.js';
+import config from '../config.js';
 
 class SpacesAPI {
   constructor(baseURL = config.SPACES_BASE_URL) {
