@@ -178,52 +178,76 @@ const HomePage = () => {
     };
     reader.readAsDataURL(selectedFile);
   
-          try {
-        console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size);
-        // Process image using Hugging Face Spaces backend
-        const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
-        
-        console.log('Full API Response:', result);
-        
-        if (result && result.data && result.data.length >= 2) {
-          console.log("Processing Successful");
-          toast({
-            title: "Processing Successful",
-            description: "The image has been processed and discs detected.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-          });
+    try {
+      console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size);
+      
+      // Process image using Hugging Face Spaces backend
+      const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
+      
+      console.log('Full API Response:', result);
+      
+      if (result && result.data && result.data.length >= 2) {
+        console.log("Processing Successful");
+        toast({
+          title: "Processing Successful",
+          description: "The image has been processed and discs detected.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
 
-          // Extract processed image and analysis results
-          const processedImage = result.data[0]; // First element is the processed image
-          const analysisResults = result.data[1]; // Second element is the analysis text
-          
-          console.log('Processed Image:', processedImage);
-          console.log('Analysis Results:', analysisResults);
-          
-          // Set the processed image
-          if (processedImage && processedImage.image) {
-            setPreview(processedImage.image);
-          }
-          
-          // Parse the analysis results to extract disc information
-          if (analysisResults && typeof analysisResults === 'string') {
-            // Parse the analysis text to extract disc results
-            const discResults = parseAnalysisResults(analysisResults);
-            setDiscImages(discResults);
-          }
-        } else {
-          console.log('Unexpected response format:', result);
-          toast({
-            title: "Processing Failed",
-            description: "The server could not process the image properly.",
-            status: "error",
-            duration: 3000,
-            isClosable: true,
-          });
+        // Extract processed image and analysis results
+        const processedImage = result.data[0]; // First element is the processed image
+        const analysisResultsJSON = result.data[1]; // Second element is the JSON string
+        
+        console.log('Processed Image:', processedImage);
+        console.log('Analysis Results JSON:', analysisResultsJSON);
+        
+        // Set the processed image
+        if (processedImage && processedImage.image) {
+          setPreview(processedImage.image);
         }
-      } catch (error) {
+        
+        // Parse the JSON analysis results
+        if (analysisResultsJSON && typeof analysisResultsJSON === 'string') {
+          try {
+            const parsedResults = JSON.parse(analysisResultsJSON);
+            console.log('Parsed Results:', parsedResults);
+            
+            if (Array.isArray(parsedResults)) {
+              setDiscImages(parsedResults);
+            } else {
+              console.error('Expected array but got:', typeof parsedResults);
+              toast({
+                title: "Data Format Error",
+                description: "Unexpected data format received from server.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+              });
+            }
+          } catch (parseError) {
+            console.error('Error parsing JSON results:', parseError);
+            toast({
+              title: "Data Parse Error",
+              description: "Could not parse analysis results from server.",
+              status: "error",
+              duration: 3000,
+              isClosable: true,
+            });
+          }
+        }
+      } else {
+        console.log('Unexpected response format:', result);
+        toast({
+          title: "Processing Failed",
+          description: "The server could not process the image properly.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
       console.error("Error processing image:", error);
       toast({
         title: "Processing Failed",
@@ -237,36 +261,6 @@ const HomePage = () => {
     }
   };
 
-  // Helper function to parse analysis results
-  const parseAnalysisResults = (analysisText) => {
-    const discResults = [];
-    const lines = analysisText.split('\n');
-    let currentDisc = null;
-    
-    for (const line of lines) {
-      if (line.startsWith('Disc ')) {
-        if (currentDisc) {
-          discResults.push(currentDisc);
-        }
-        currentDisc = {
-          url: '', // We don't have individual disc images from HF Spaces
-          message: line + '\n',
-          discNumber: line.match(/Disc (\d+):/)?.[1] || 'Unknown'
-        };
-      } else if (currentDisc && line.trim()) {
-        currentDisc.message += line + '\n';
-      }
-    }
-    
-    // Add the last disc
-    if (currentDisc) {
-      discResults.push(currentDisc);
-    }
-    
-    return discResults;
-  };
-  
-
   const handleFileSelect = (e) => {
     if (e.target.files[0]) {
       handleFileUpload(e.target.files[0]);
@@ -277,6 +271,14 @@ const HomePage = () => {
     setFile(null);
     setPreview(null);
     setUploadProgress(0);
+    setDiscImages([]);
+  };
+
+  const formatPredictionValue = (value, isInteger = false) => {
+    if (isInteger) {
+      return Math.round(value);
+    }
+    return typeof value === 'number' ? value.toFixed(3) : value;
   };
 
   const Testimonial = ({ text, author, role }) => (
@@ -390,7 +392,6 @@ const HomePage = () => {
             LinkedIn
           </Button>
         )}
-
       </HStack>
     </Box>
   );
@@ -541,13 +542,14 @@ const HomePage = () => {
                             <Icon as={FiX} />
                           </Button>
                         </HStack>
+                        
                         <Center>
                           {loading ? (
                             <Flex
                               direction="column"
                               align="center"
                               justify="center"
-                              height="300px" // Ensure it has a fixed height for vertical centering
+                              height="300px"
                             >
                               <Spinner
                                 thickness="4px"
@@ -564,7 +566,7 @@ const HomePage = () => {
                             preview && (
                               <Box mt={8}>
                                 <Heading size="md" color="#1a365d" textAlign="center" mb={4}>
-                                  Processed Image
+                                  Processed Image with Detected Discs
                                 </Heading>
                                 <Image
                                   src={preview}
@@ -581,35 +583,97 @@ const HomePage = () => {
 
                         {discImages.length > 0 && (
                           <Box mt={8}>
-                            <Heading size="md" color="#1a365d" textAlign="center" mb={4}>
-                              Disc Analysis Results
+                            <Heading size="md" color="#1a365d" textAlign="center" mb={6}>
+                              Individual Disc Analysis Results ({discImages.length} discs detected)
                             </Heading>
-                            <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={4}>
+                            <Grid templateColumns="repeat(auto-fit, minmax(400px, 1fr))" gap={6}>
                               {discImages.map((disc, index) => (
-                                <Flex
+                                <Card
                                   key={index}
-                                  direction="column"
-                                  align="flex-start"
-                                  justify="flex-start"
-                                  textAlign="left"
                                   p={6}
-                                  borderRadius="md"
-                                  boxShadow="lg"
-                                  bg="white"
-                                  minH="200px"
+                                  borderRadius="lg"
+                                  boxShadow="md"
+                                  bg="gray.50"
+                                  transition="all 0.3s ease"
+                                  _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                                 >
-                                  <Heading size="sm" color="#1a365d" mb={3}>
-                                    {disc.discNumber ? `Disc ${disc.discNumber}` : `Disc ${index + 1}`}
-                                  </Heading>
-                                  <Text color="gray.700" fontSize="sm" whiteSpace="pre-line">
-                                    {disc.message}
-                                  </Text>
-                                </Flex>
+                                  <VStack spacing={4} align="stretch">
+                                    <Heading size="sm" color="#1a365d" textAlign="center">
+                                      Disc {disc.disc_number}
+                                    </Heading>
+                                    
+                                    {/* Individual disc image */}
+                                    {disc.disc_image && (
+                                      <Center>
+                                        <Image
+                                          src={disc.disc_image}
+                                          alt={`Disc ${disc.disc_number}`}
+                                          maxH="150px"
+                                          objectFit="contain"
+                                          borderRadius="md"
+                                          border="2px solid"
+                                          borderColor="gray.200"
+                                        />
+                                      </Center>
+                                    )}
+                                    
+                                    {/* Predictions */}
+                                    {disc.predictions && (
+                                      <VStack spacing={2} align="stretch">
+                                        <Grid templateColumns="repeat(2, 1fr)" gap={2}>
+                                          <Box>
+                                            <Text fontSize="sm" fontWeight="bold" color="blue.600">
+                                              Pfirrman Grade:
+                                            </Text>
+                                            <Badge colorScheme="blue" fontSize="sm">
+                                              {formatPredictionValue(disc.predictions.pfirrman_grade, true)}
+                                            </Badge>
+                                          </Box>
+                                          
+                                          <Box>
+                                            <Text fontSize="sm" fontWeight="bold" color="purple.600">
+                                              Modic Changes:
+                                            </Text>
+                                            <Badge colorScheme="purple" fontSize="sm">
+                                              {formatPredictionValue(disc.predictions.modic, true)}
+                                            </Badge>
+                                          </Box>
+                                        </Grid>
+                                        
+                                        <Divider />
+                                        
+                                        <Text fontSize="sm" fontWeight="bold" color="gray.700">
+                                          Pathology Scores:
+                                        </Text>
+                                        
+                                        <Grid templateColumns="repeat(2, 1fr)" gap={2} fontSize="xs">
+                                          <Text>
+                                            <strong>Up Endplate:</strong> {formatPredictionValue(disc.predictions.up_endplate)}
+                                          </Text>
+                                          <Text>
+                                            <strong>Low Endplate:</strong> {formatPredictionValue(disc.predictions.low_endplate)}
+                                          </Text>
+                                          <Text>
+                                            <strong>Herniation:</strong> {formatPredictionValue(disc.predictions.disc_herniation)}
+                                          </Text>
+                                          <Text>
+                                            <strong>Narrowing:</strong> {formatPredictionValue(disc.predictions.disc_narrowing)}
+                                          </Text>
+                                          <Text>
+                                            <strong>Bulging:</strong> {formatPredictionValue(disc.predictions.disc_bulging)}
+                                          </Text>
+                                          <Text>
+                                            <strong>Spondylolisthesis:</strong> {formatPredictionValue(disc.predictions.spondylilisthesis)}
+                                          </Text>
+                                        </Grid>
+                                      </VStack>
+                                    )}
+                                  </VStack>
+                                </Card>
                               ))}
                             </Grid>
                           </Box>
                         )}
-
                       </VStack>
                     </Box>
                   )}
@@ -651,7 +715,6 @@ const HomePage = () => {
               gap={{ base: 8, md: 10 }}
               px={{ base: 4, md: 0 }}
             >
-              {/* Add your teammates here - just update the props */}
               <TeamMember
                 name="Love Bhusal"
                 linkedin="https://www.linkedin.com/in/love-bhusal/"
