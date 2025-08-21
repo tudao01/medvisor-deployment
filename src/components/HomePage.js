@@ -625,7 +625,7 @@ const HomePage = () => {
                                   {discImages.map((disc, index) => (
                                     <Card
                                       key={index}
-                                      w="260px"
+                                      w="180px"
                                       borderRadius="lg"
                                       border="1px solid"
                                       borderColor="gray.200"
@@ -771,8 +771,6 @@ const HomePage = () => {
           </VStack>
         </Container>
       </Box>
-      
-      <ChatBot />
     </Box>
   );
 };
