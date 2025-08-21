@@ -195,17 +195,50 @@ const HomePage = () => {
           duration: 3000,
           isClosable: true,
         });
-
+  
         // Extract processed image and analysis results
-        const processedImage = result.data[0]; // First element is the processed image
+        const processedImageData = result.data[0]; // First element is the processed image
         const analysisResultsJSON = result.data[1]; // Second element is the JSON string
         
-        console.log('Processed Image:', processedImage);
+        console.log('Processed Image Data:', processedImageData);
         console.log('Analysis Results JSON:', analysisResultsJSON);
         
-        // Set the processed image
-        if (processedImage && processedImage.image) {
-          setPreview(processedImage.image);
+        // Handle the processed image with bounding boxes
+        // The processedImageData might be a direct base64 string, URL, or object
+        let processedImageSrc = null;
+        
+        if (typeof processedImageData === 'string') {
+          // If it's already a base64 string or URL
+          processedImageSrc = processedImageData;
+        } else if (processedImageData && processedImageData.image) {
+          // If it's wrapped in an object
+          processedImageSrc = processedImageData.image;
+        } else if (processedImageData && processedImageData.url) {
+          // If it's a URL object
+          processedImageSrc = processedImageData.url;
+        } else if (processedImageData && typeof processedImageData === 'object') {
+          // Try to find any property that looks like an image
+          const imageKeys = ['image', 'url', 'src', 'data'];
+          for (const key of imageKeys) {
+            if (processedImageData[key]) {
+              processedImageSrc = processedImageData[key];
+              break;
+            }
+          }
+        }
+        
+        // If we still don't have a processed image source, log the structure
+        if (!processedImageSrc) {
+          console.warn('Could not find processed image in response. Structure:', processedImageData);
+          console.log('Type of processedImageData:', typeof processedImageData);
+          console.log('Keys in processedImageData:', Object.keys(processedImageData || {}));
+          
+          // Fallback: use the original preview if no processed image found
+          // The preview was already set from the FileReader above
+        } else {
+          // Set the processed image with bounding boxes as the preview
+          console.log('Setting processed image as preview:', processedImageSrc);
+          setPreview(processedImageSrc);
         }
         
         // Parse the JSON analysis results
@@ -257,7 +290,7 @@ const HomePage = () => {
         isClosable: true,
       });
     } finally {
-      setLoading(false); // Stop loading animation
+      setLoading(false);
     }
   };
 
