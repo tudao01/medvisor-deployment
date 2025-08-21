@@ -616,175 +616,88 @@ const HomePage = () => {
                         {discImages.length > 0 && (
                           <Box mt={8}>
                             <Heading size="md" color="#1a365d" textAlign="center" mb={6}>
-                              Individual Disc Analysis Results ({discImages.length} discs detected)
+                              Individual Disc Analysis Results, ({discImages.length} discs detected)
                             </Heading>
-                            
-                            {/* Playing card style grid - centered and responsive */}
-                            <Flex justify="center" w="full">
+
+                            <Flex justify="center" w="full" px={4}>
                               <Box maxW="1200px" w="full">
-                                <Grid 
-                                  templateColumns={{
-                                    base: "1fr",                    // 1 card per row on mobile
-                                    sm: "repeat(2, 1fr)",          // 2 cards per row on small screens
-                                    md: "repeat(3, 1fr)",          // 3 cards per row on medium screens
-                                    lg: "repeat(4, 1fr)",          // 4 cards per row on large screens
-                                    xl: "repeat(5, 1fr)"           // 5 cards per row on extra large screens
-                                  }}
-                                  gap={6}
-                                  justifyItems="center"
-                                  px={4}
-                                >
+                                <Flex wrap="wrap" justify="center" gap={6}>
                                   {discImages.map((disc, index) => (
                                     <Card
                                       key={index}
-                                      w="240px"                    // Fixed width for playing card feel
-                                      h="400px"                    // Fixed height for consistent card size
-                                      borderRadius="xl"
-                                      boxShadow="0 8px 25px rgba(0, 0, 0, 0.15)"
-                                      bg="white"
+                                      w="260px"
+                                      borderRadius="lg"
                                       border="1px solid"
-                                      borderColor="gray.100"
+                                      borderColor="gray.200"
+                                      boxShadow="md"
+                                      bg="white"
+                                      textAlign="center"
                                       transition="all 0.3s ease"
-                                      _hover={{ 
-                                        transform: 'translateY(-8px) scale(1.02)', 
-                                        boxShadow: '0 15px 35px rgba(0, 0, 0, 0.2)',
-                                        borderColor: "#5A6F6A"
-                                      }}
-                                      cursor="pointer"
-                                      overflow="hidden"
+                                      _hover={{ transform: "translateY(-6px)", boxShadow: "lg" }}
                                     >
-                                      <CardBody p={0} display="flex" flexDirection="column" h="full">
-                                        {/* Card Header */}
-                                        <Box
-                                          bg="linear-gradient(135deg, #1a365d, #2a4365)"
-                                          color="white"
-                                          py={3}
-                                          px={4}
-                                          textAlign="center"
-                                        >
-                                          <Heading size="md" fontWeight="bold">
-                                            Disc {disc.disc_number}
-                                          </Heading>
-                                        </Box>
-                                        
-                                        {/* Disc Image Section */}
-                                        <Box flex="0 0 140px" p={4} bg="gray.50">
-                                          {disc.disc_image ? (
-                                            <Center h="full">
-                                              <Image
-                                                src={disc.disc_image}
-                                                alt={`Disc ${disc.disc_number}`}
-                                                maxH="120px"
-                                                maxW="full"
-                                                objectFit="contain"
-                                                borderRadius="lg"
-                                                border="2px solid"
-                                                borderColor="white"
-                                                boxShadow="md"
-                                              />
-                                            </Center>
-                                          ) : (
-                                            <Center h="full">
-                                              <Icon as={FiActivity} w={12} h={12} color="gray.400" />
-                                            </Center>
-                                          )}
-                                        </Box>
-                                        
-                                        {/* Predictions Section */}
-                                        <VStack flex="1" p={4} spacing={3} justify="flex-start" align="stretch">
-                                          {/* Primary Classifications */}
-                                          <VStack spacing={2}>
-                                            <HStack justify="space-between" w="full">
-                                              <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                                                Pfirrman Grade
-                                              </Text>
-                                              <Badge 
-                                                colorScheme="blue" 
-                                                fontSize="sm" 
-                                                px={2} 
-                                                py={1} 
-                                                borderRadius="md"
-                                                fontWeight="bold"
-                                              >
-                                                {formatPredictionValue(disc.predictions?.pfirrman_grade, true) || 'N/A'}
-                                              </Badge>
-                                            </HStack>
-                                            
-                                            <HStack justify="space-between" w="full">
-                                              <Text fontSize="sm" fontWeight="bold" color="purple.600">
-                                                Modic Changes
-                                              </Text>
-                                              <Badge 
-                                                colorScheme="purple" 
-                                                fontSize="sm" 
-                                                px={2} 
-                                                py={1} 
-                                                borderRadius="md"
-                                                fontWeight="bold"
-                                              >
-                                                {formatPredictionValue(disc.predictions?.modic, true) || 'N/A'}
-                                              </Badge>
-                                            </HStack>
-                                          </VStack>
-                                          
-                                          <Divider />
-                                          
-                                          {/* Pathology Scores */}
-                                          <VStack spacing={1} align="stretch">
-                                            <Text fontSize="xs" fontWeight="bold" color="gray.600" textAlign="center" mb={2}>
-                                              PATHOLOGY SCORES
-                                            </Text>
-                                            
-                                            {[
-                                              { label: "Herniation", value: disc.predictions?.disc_herniation, color: "red" },
-                                              { label: "Narrowing", value: disc.predictions?.disc_narrowing, color: "orange" },
-                                              { label: "Bulging", value: disc.predictions?.disc_bulging, color: "yellow" },
-                                              { label: "Spondylolisthesis", value: disc.predictions?.spondylilisthesis, color: "green" }
-                                            ].map((item, idx) => (
-                                              <HStack key={idx} justify="space-between" fontSize="xs">
-                                                <Text color="gray.700" fontWeight="medium" noOfLines={1}>
-                                                  {item.label}:
-                                                </Text>
-                                                <Box
-                                                  bg={`${item.color}.100`}
-                                                  color={`${item.color}.700`}
-                                                  px={2}
-                                                  py={1}
-                                                  borderRadius="md"
-                                                  fontSize="xs"
-                                                  fontWeight="bold"
-                                                  minW="45px"
-                                                  textAlign="center"
-                                                >
-                                                  {formatPredictionValue(item.value) || 'N/A'}
-                                                </Box>
-                                              </HStack>
-                                            ))}
-                                            
-                                            {/* Endplate scores in smaller text */}
-                                            <VStack spacing={1} mt={2} pt={2} borderTop="1px solid" borderColor="gray.100">
-                                              <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                                                ENDPLATE SCORES
-                                              </Text>
-                                              <HStack justify="space-between" w="full" fontSize="xs">
-                                                <Text color="gray.600">Upper:</Text>
-                                                <Text fontWeight="bold" color="gray.700">
-                                                  {formatPredictionValue(disc.predictions?.up_endplate) || 'N/A'}
-                                                </Text>
-                                              </HStack>
-                                              <HStack justify="space-between" w="full" fontSize="xs">
-                                                <Text color="gray.600">Lower:</Text>
-                                                <Text fontWeight="bold" color="gray.700">
-                                                  {formatPredictionValue(disc.predictions?.low_endplate) || 'N/A'}
-                                                </Text>
-                                              </HStack>
-                                            </VStack>
-                                          </VStack>
+                                      <CardBody>
+                                        {/* Title */}
+                                        <Heading size="md" color="#1a365d" mb={3}>
+                                           Disc {disc.disc_number}
+                                        </Heading>
+
+                                        {/* Disc Image */}
+                                        {disc.disc_image ? (
+                                          <Image
+                                            src={disc.disc_image}
+                                            alt={`Disc ${disc.disc_number}`}
+                                            maxH="140px"
+                                            mx="auto"
+                                            mb={4}
+                                            objectFit="contain"
+                                            borderRadius="md"
+                                            boxShadow="sm"
+                                          />
+                                        ) : (
+                                          <Center h="140px" mb={4}>
+                                            <Icon as={FiActivity} w={10} h={10} color="gray.400" />
+                                          </Center>
+                                        )}
+
+                                        {/* Predictions */}
+                                        <VStack spacing={2} align="center">
+                                          <Text fontSize="sm">
+                                            <b>Pfirrman:</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.pfirrman_grade, true) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Modic:</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.modic, true) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Herniation:</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.disc_herniation) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Narrowing:</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.disc_narrowing) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Bulging:</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.disc_bulging) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Spondylolisthesis:</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.spondylilisthesis) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Endplate (Upper):</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.up_endplate) || "N/A"}
+                                          </Text>
+                                          <Text fontSize="sm">
+                                            <b>Endplate (Lower):</b>{" "}
+                                            {formatPredictionValue(disc.predictions?.low_endplate) || "N/A"}
+                                          </Text>
                                         </VStack>
                                       </CardBody>
                                     </Card>
                                   ))}
-                                </Grid>
+                                </Flex>
                               </Box>
                             </Flex>
                           </Box>
