@@ -582,60 +582,34 @@ const HomePage = () => {
                         {discImages.length > 0 && (
                           <Box mt={8}>
                             <Heading size="md" color="#1a365d" textAlign="center" mb={4}>
-                              Extracted Disc Images
+                              Disc Analysis Results
                             </Heading>
-                            <Grid templateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap={4}>
-                            {discImages.map((disc, index) => (
-                              <Flex
-                                key={index}
-                                direction="column"
-                                align="center"
-                                justify="center"
-                                textAlign="center"
-                                p={4}
-                                borderRadius="md"
-                                boxShadow="lg"
-                                bg="white"
-                              >
-                                {disc.url ? (
-                                  <Image
-                                    src={disc.url}
-                                    alt={`Disc ${index + 1}`}
-                                    maxH="150px"
-                                    objectFit="contain"
-                                    borderRadius="lg"
-                                    boxShadow="lg"
-                                    mb={4}
-                                  />
-                                ) : (
-                                  <Box
-                                    w="100px"
-                                    h="100px"
-                                    bg="gray.100"
-                                    borderRadius="lg"
-                                    display="flex"
-                                    alignItems="center"
-                                    justifyContent="center"
-                                    mb={4}
-                                  >
-                                    <Text fontSize="2xl" color="gray.500" fontWeight="bold">
-                                      {disc.discNumber ? disc.discNumber : index + 1}
-                                    </Text>
-                                  </Box>
-                                )}
-                                <Text color="gray.500" fontSize="sm" textAlign="center">
-                                  {disc.message.split('\n').map((line, i) => (
-                                    <span key={i}>
-                                      {line}
-                                      <br />
-                                    </span>
-                                  ))}
-                                </Text>
-                              </Flex>
-                            ))}
+                            <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={4}>
+                              {discImages.map((disc, index) => (
+                                <Flex
+                                  key={index}
+                                  direction="column"
+                                  align="flex-start"
+                                  justify="flex-start"
+                                  textAlign="left"
+                                  p={6}
+                                  borderRadius="md"
+                                  boxShadow="lg"
+                                  bg="white"
+                                  minH="200px"
+                                >
+                                  <Heading size="sm" color="#1a365d" mb={3}>
+                                    {disc.discNumber ? `Disc ${disc.discNumber}` : `Disc ${index + 1}`}
+                                  </Heading>
+                                  <Text color="gray.700" fontSize="sm" whiteSpace="pre-line">
+                                    {disc.message}
+                                  </Text>
+                                </Flex>
+                              ))}
                             </Grid>
                           </Box>
                         )}
+
                       </VStack>
                     </Box>
                   )}
