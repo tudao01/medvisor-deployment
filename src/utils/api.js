@@ -78,7 +78,7 @@ class SpacesAPI {
         formData.append('data', imageFile);
       }
       
-      // For Gradio Interface, use the default predict endpoint
+      // Use the standard Gradio predict endpoint
       const response = await fetch(`${this.baseURL}/run/predict`, {
         method: 'POST',
         body: formData,
