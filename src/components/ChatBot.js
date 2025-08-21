@@ -19,30 +19,27 @@ const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim()) {
-      setMessages([...messages, { text: inputMessage, sender: 'user' }]);
+      const userMessage = { text: inputMessage, sender: 'user' };
+      setMessages([...messages, userMessage]);
       setInputMessage('');
   
       try {
-        // Use Hugging Face Spaces backend for chat
-        const result = await spacesAPI.chatWithBot(inputMessage, messages.map(m => [m.text, m.sender === 'bot' ? m.text : '']));
+        const result = await spacesAPI.chatWithBot(inputMessage, chatHistory);
+        // According to the API docs, result.data[0] is the message and result.data[1] is the history
+        const botResponse = result.data[0];
+        const updatedHistory = result.data[1];
         
-        if (result && result.data && result.data.length > 0) {
-          const botResponse = result.data[0];
-          setMessages((prev) => [
-            ...prev,
-            { text: botResponse, sender: 'bot' },
-          ]);
-        } else {
-          throw new Error('Invalid response format from server.');
-        }
+        setChatHistory(updatedHistory);
+        setMessages((prev) => [...prev, { text: botResponse, sender: 'bot' }]);
       } catch (error) {
         console.error('Error fetching chatbot response:', error);
         setMessages((prev) => [
           ...prev,
-          { text: 'Error: Unable to fetch response from the server. Please try again.', sender: 'bot' },
+          { text: 'Error: Unable to fetch response from server.', sender: 'bot' },
         ]);
       }
     }
