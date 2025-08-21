@@ -185,7 +185,7 @@ const HomePage = () => {
         
         console.log('Full API Response:', result);
         
-        if (result && result.data && result.data.length >= 2) {
+        if (result && result.data && result.data.length >= 3) {
           console.log("Processing Successful");
           toast({
             title: "Processing Successful",
@@ -195,21 +195,31 @@ const HomePage = () => {
             isClosable: true,
           });
 
-          // Extract processed image and analysis results
+          // Extract processed image, analysis results, and disc images
           const processedImage = result.data[0]; // First element is the processed image
           const analysisResults = result.data[1]; // Second element is the analysis text
+          const discImagesData = result.data[2]; // Third element is the disc images
           
           console.log('Processed Image:', processedImage);
           console.log('Analysis Results:', analysisResults);
+          console.log('Disc Images Data:', discImagesData);
           
           // Set the processed image
           if (processedImage && processedImage.image) {
             setPreview(processedImage.image);
           }
           
-          // Parse the analysis results to extract disc information
-          if (analysisResults && typeof analysisResults === 'string') {
-            // Parse the analysis text to extract disc results
+          // Handle disc images and analysis results
+          if (discImagesData && Array.isArray(discImagesData)) {
+            // Use the disc images directly from the API response
+            const discResults = discImagesData.map((disc, index) => ({
+              url: disc.image, // The actual disc image
+              message: disc.message || `Disc ${index + 1} analysis`,
+              discNumber: index + 1
+            }));
+            setDiscImages(discResults);
+          } else if (analysisResults && typeof analysisResults === 'string') {
+            // Fallback to parsing text if disc images are not available
             const discResults = parseAnalysisResults(analysisResults);
             setDiscImages(discResults);
           }
@@ -582,27 +592,54 @@ const HomePage = () => {
                         {discImages.length > 0 && (
                           <Box mt={8}>
                             <Heading size="md" color="#1a365d" textAlign="center" mb={4}>
-                              Disc Analysis Results
+                              Extracted Disc Images
                             </Heading>
-                            <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={4}>
+                            <Grid templateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap={4}>
                             {discImages.map((disc, index) => (
                               <Flex
                                 key={index}
                                 direction="column"
-                                align="flex-start"
-                                justify="flex-start"
-                                textAlign="left"
-                                p={6}
+                                align="center"
+                                justify="center"
+                                textAlign="center"
+                                p={4}
                                 borderRadius="md"
                                 boxShadow="lg"
                                 bg="white"
-                                minH="200px"
                               >
-                                <Heading size="sm" color="#1a365d" mb={3}>
-                                  {disc.discNumber ? `Disc ${disc.discNumber}` : `Disc ${index + 1}`}
-                                </Heading>
-                                <Text color="gray.700" fontSize="sm" whiteSpace="pre-line">
-                                  {disc.message}
+                                {disc.url ? (
+                                  <Image
+                                    src={disc.url}
+                                    alt={`Disc ${index + 1}`}
+                                    maxH="150px"
+                                    objectFit="contain"
+                                    borderRadius="lg"
+                                    boxShadow="lg"
+                                    mb={4}
+                                  />
+                                ) : (
+                                  <Box
+                                    w="100px"
+                                    h="100px"
+                                    bg="gray.100"
+                                    borderRadius="lg"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    mb={4}
+                                  >
+                                    <Text fontSize="2xl" color="gray.500" fontWeight="bold">
+                                      {disc.discNumber ? disc.discNumber : index + 1}
+                                    </Text>
+                                  </Box>
+                                )}
+                                <Text color="gray.500" fontSize="sm" textAlign="center">
+                                  {disc.message.split('\n').map((line, i) => (
+                                    <span key={i}>
+                                      {line}
+                                      <br />
+                                    </span>
+                                  ))}
                                 </Text>
                               </Flex>
                             ))}
