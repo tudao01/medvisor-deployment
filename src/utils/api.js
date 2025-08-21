@@ -78,8 +78,9 @@ class SpacesAPI {
         formData.append('data', imageFile);
       }
       
-      // Use the standard Gradio predict endpoint
-      const response = await fetch(`${this.baseURL}/run/predict`, {
+      // For Gradio Blocks with API enabled, use the specific function endpoint
+      // The function name becomes part of the URL
+      const response = await fetch(`${this.baseURL}/run/process_image`, {
         method: 'POST',
         body: formData,
         // Don't set Content-Length header - let the browser handle it
