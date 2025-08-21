@@ -131,11 +131,35 @@ const HomePage = () => {
       return;
     }
     
+    // Additional file validation
+    if (selectedFile.size === 0) {
+      toast({
+        title: "Empty File",
+        description: "The selected file is empty. Please choose a different file.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
     // Check file size (max 10MB)
     if (selectedFile.size > 10 * 1024 * 1024) {
       toast({
         title: "File Too Large",
         description: "Please select an image smaller than 10MB.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    // Validate file type
+    if (!selectedFile.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select an image file (JPEG, PNG, etc.).",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -154,46 +178,52 @@ const HomePage = () => {
     };
     reader.readAsDataURL(selectedFile);
   
-    try {
-      console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size);
-      // Process image using Hugging Face Spaces backend
-      const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
-      
-      if (result && result.data && result.data.length >= 2) {
-        console.log("Processing Successful");
-        toast({
-          title: "Processing Successful",
-          description: "The image has been processed and discs detected.",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
+          try {
+        console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size);
+        // Process image using Hugging Face Spaces backend
+        const result = await spacesAPI.processImageWithDiscDetection(selectedFile);
+        
+        console.log('Full API Response:', result);
+        
+        if (result && result.data && result.data.length >= 2) {
+          console.log("Processing Successful");
+          toast({
+            title: "Processing Successful",
+            description: "The image has been processed and discs detected.",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
 
-        // Extract processed image and analysis results
-        const processedImage = result.data[0]; // First element is the processed image
-        const analysisResults = result.data[1]; // Second element is the analysis text
-        
-        // Set the processed image
-        if (processedImage && processedImage.image) {
-          setPreview(processedImage.image);
+          // Extract processed image and analysis results
+          const processedImage = result.data[0]; // First element is the processed image
+          const analysisResults = result.data[1]; // Second element is the analysis text
+          
+          console.log('Processed Image:', processedImage);
+          console.log('Analysis Results:', analysisResults);
+          
+          // Set the processed image
+          if (processedImage && processedImage.image) {
+            setPreview(processedImage.image);
+          }
+          
+          // Parse the analysis results to extract disc information
+          if (analysisResults && typeof analysisResults === 'string') {
+            // Parse the analysis text to extract disc results
+            const discResults = parseAnalysisResults(analysisResults);
+            setDiscImages(discResults);
+          }
+        } else {
+          console.log('Unexpected response format:', result);
+          toast({
+            title: "Processing Failed",
+            description: "The server could not process the image properly.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
         }
-        
-        // Parse the analysis results to extract disc information
-        if (analysisResults && typeof analysisResults === 'string') {
-          // Parse the analysis text to extract disc results
-          const discResults = parseAnalysisResults(analysisResults);
-          setDiscImages(discResults);
-        }
-      } else {
-        toast({
-          title: "Processing Failed",
-          description: "The server could not process the image properly.",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
-      }
-    } catch (error) {
+      } catch (error) {
       console.error("Error processing image:", error);
       toast({
         title: "Processing Failed",

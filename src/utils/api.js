@@ -52,17 +52,32 @@ class SpacesAPI {
         throw new Error('Invalid file object');
       }
       
+      // Additional validation
+      if (imageFile.size === 0) {
+        throw new Error('File is empty');
+      }
+      
       console.log('File details:', {
         name: imageFile.name,
         size: imageFile.size,
         type: imageFile.type
       });
       
+      // Create a fresh FormData object
       const formData = new FormData();
-      formData.append('data', imageFile);
       
-      // Use the default Gradio endpoint - this should work with your app_gradio.py
-      const response = await fetch(`${this.baseURL}/run/predict`, {
+      // Try to create a new File object to avoid corruption
+      try {
+        const freshFile = new File([imageFile], imageFile.name, { type: imageFile.type });
+        formData.append('data', freshFile);
+        console.log('Fresh file created, size:', freshFile.size);
+      } catch (fileError) {
+        console.warn('Could not create fresh file, using original:', fileError);
+        formData.append('data', imageFile);
+      }
+      
+      // Use the process_image function from your app_gradio.py
+      const response = await fetch(`${this.baseURL}/run/process_image`, {
         method: 'POST',
         body: formData,
         // Don't set Content-Length header - let the browser handle it
