@@ -44,13 +44,14 @@ class SpacesAPI {
     }
   }
 
-  // Process image using the specific process_image function
+  // Process image using the default Gradio endpoint
   async processImageWithDiscDetection(imageFile) {
     try {
       const formData = new FormData();
       formData.append('data', imageFile);
       
-      const response = await fetch(`${this.baseURL}/run/process_image`, {
+      // Use the default Gradio endpoint - this should work with your app_gradio.py
+      const response = await fetch(`${this.baseURL}/run/predict`, {
         method: 'POST',
         body: formData,
       });
@@ -60,6 +61,7 @@ class SpacesAPI {
       }
 
       const result = await response.json();
+      console.log('API Response:', result); // Debug logging
       return result;
     } catch (error) {
       console.error('Image processing with disc detection failed:', error);
