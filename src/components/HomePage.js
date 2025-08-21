@@ -625,7 +625,7 @@ const HomePage = () => {
                                   {discImages.map((disc, index) => (
                                     <Card
                                       key={index}
-                                      w="180px"
+                                      w="200px"
                                       borderRadius="lg"
                                       border="1px solid"
                                       borderColor="gray.200"
