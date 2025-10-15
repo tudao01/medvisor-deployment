@@ -752,7 +752,7 @@ const HomePage = () => {
                 linkedin="https://www.linkedin.com/in/tudao02/"
               />
               <TeamMember
-                name="Elden Delguia"
+                name="Elden Deguia"
                 linkedin="https://www.linkedin.com/in/elden-deguia-84a68b325/"
               />
               <TeamMember
